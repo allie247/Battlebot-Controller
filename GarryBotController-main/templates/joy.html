@@ -1,0 +1,210 @@
+<!DOCTYPE HTML>
+<!--
+ The MIT License (MIT)
+
+ This file is part of the JoyStick Project (https://github.com/bobboteck/JoyStick).
+ Copyright (c) 2015 Roberto D'Amico (Bobboteck).
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+-->
+<html>
+	<head>
+		<title>Joy</title>
+		<meta charset="utf-8">
+		<meta name="description" content="Example page of use pure Javascript JoyStick">
+		<meta name="author" content="Roberto D'Amico">
+		<link rel="shortcut icon" type="image/png" href="http://bobboteck.github.io/img/roberto-damico-bobboteck.png">
+		<style>
+*
+{
+	box-sizing: border-box;
+}
+body
+{
+	margin: 0px;
+	padding: 0px;
+	font-family: monospace;
+}
+.row
+{
+	display: inline-flex;
+	clear: both;
+}
+.columnLateral
+{
+  float: left;
+  width: 15%;
+  min-width: 300px;
+}
+.columnCetral
+{
+  float: left;
+  width: 70%;
+  min-width: 300px;
+}
+#joy2Div
+{
+	width:200px;
+	height:200px;
+	margin:50px
+}
+#joystick
+{
+	border: 1px solid #FF0000;
+}
+#joystick2
+{
+	border: 1px solid #0000FF;
+}
+		</style>
+		<script src="/static/joy.js"></script>
+	</head>
+	<body>
+		<!-- Example of two JoyStick integrated in the page structure -->
+		<div class="row">
+			<div class="columnLateral">
+				<div id="joy1Div" style="width:200px;height:200px;margin:50px"></div>
+				Posizione X:<input id="joy1PosizioneX" type="text" /><br />
+				Posizione Y:<input id="joy1PosizioneY" type="text" /><br />
+				Direzione:<input id="joy1Direzione" type="text" /><br />
+				X :<input id="joy1X" type="text" /></br>
+				Y :<input id="joy1Y" type="text" />
+			</div>
+			<div id="throttleDiv" style="width:200px;height:200px;margin:50px">
+
+			</div>
+			<div id="arm">
+				<button id="arm-button">
+
+				</button>
+			</div>
+			<div class="columnCetral">
+				<h2>GarryBot Controller</h2>
+				<p>
+ 					Here is the controller for GarryBot. The Joystick on the left controls movement. The Button on the right will arm the blades. The blade throttle can only be raised above zero when the blades are armed.
+				</p>
+			</div>
+
+		</div>
+		<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+		<script type="text/javascript">
+
+// Create JoyStick object into the DIV 'joy1Div'
+//var Joy1 = new JoyStick('joy1Div');
+
+var joy1IinputPosX = document.getElementById("joy1PosizioneX");
+var joy1InputPosY = document.getElementById("joy1PosizioneY");
+var joy1Direzione = document.getElementById("joy1Direzione");
+var joy1X = document.getElementById("joy1X");
+var joy1Y = document.getElementById("joy1Y");
+/*
+setInterval(function(){ joy1IinputPosX.value=Joy1.GetPosX(); }, 50);
+setInterval(function(){ joy1InputPosY.value=Joy1.GetPosY(); }, 50);
+setInterval(function(){ joy1Direzione.value=Joy1.GetDir(); }, 50);
+setInterval(function(){ joy1X.value=Joy1.GetX(); }, 50);
+setInterval(function(){ joy1Y.value=Joy1.GetY(); }, 50);
+*/
+// Create JoyStick object into the DIV 'joy1Div'
+var Joy1 = new JoyStick('joy1Div', {}, function(stickData) {
+    joy1IinputPosX.value = stickData.xPosition;
+    joy1InputPosY.value = stickData.yPosition;
+    joy1Direzione.value = stickData.cardinalDirection;
+    joy1X.value = stickData.x;
+    joy1Y.value = stickData.y;
+
+	//Use stick cardinal direction to call movement functions in the flask app.
+	if(stickData.cardinalDirection === "N") {
+		//forward
+		$.ajax({
+            url: "/forward",
+            type: "post",
+            success: function(response) {
+                console.log(response);
+            }
+        });
+	}
+	else if(stickData.cardinalDirection === "NW") {
+		//forward left
+	}
+	else if(stickData.cardinalDirection === "NE") {
+		//forward right
+	}
+	else if(stickData.cardinalDirection === "W") {
+		//left
+		$.ajax({
+            url: "/turnLeft",
+            type: "post",
+            success: function(response) {
+                console.log(response);
+            }
+        });
+	}
+	else if(stickData.cardinalDirection === "E") {
+		//right
+		$.ajax({
+            url: "/turnRight",
+            type: "post",
+            success: function(response) {
+                console.log(response);
+            }
+        });
+	}
+	else if(stickData.cardinalDirection === "C") {
+		//center
+		$.ajax({
+            url: "/zero",
+            type: "post",
+            success: function(response) {
+                console.log(response);
+            }
+        });
+	}
+});
+
+var Throttle = new JoyStick('throttleDiv', { "title": "throttle", "autoReturnToCenter": false }, function(stickData) {
+	$.post("/change_throttle",
+			{level: ((stickData.yPosition+100)*500)},
+            function(response) {
+                console.log(response);
+            }
+        );
+});
+
+var ArmButton = document.getElementById("arm-button");
+ArmButton.onclick = function(){
+	$.post("/arm_blades",
+			{},
+            function(response) {
+                console.log(response);
+            }
+        );
+};
+
+
+// setInterval(function(){ joy2IinputPosX.value=Joy2.GetPosX(); }, 50);
+// setInterval(function(){ joy2InputPosY.value=Joy2.GetPosY(); }, 50);
+// setInterval(function(){ joy2Direzione.value=Joy2.GetDir(); }, 50);
+// setInterval(function(){ joy2X.value=Joy2.GetX(); }, 50);
+// setInterval(function(){ joy2Y.value=Joy2.GetY(); }, 50);
+
+
+		</script>
+
+	</body>
+</html>
